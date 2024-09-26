@@ -12,10 +12,13 @@ exports.googleAuth = passport.authenticate("google", {
 exports.googleAuthCallback = (req, res, next) => {
   passport.authenticate(
     "google",
-    { session: false, failureRedirect: "/auth/login" },
+    {
+      session: false,
+      failureRedirect: `${process.env.FRONTEND_URL}/auth/login`,
+    },
     (err, user) => {
       if (err || !user) {
-        return res.redirect("/auth/login");
+        return res.redirect(`${process.env.FRONTEND_URL}/auth/login`);
       }
 
       const token = jwt.sign(
@@ -26,7 +29,7 @@ exports.googleAuthCallback = (req, res, next) => {
       res.cookie("accessToken", token, {
         secure: process.env.NODE_ENV === "production",
         maxAge: 3600000,
-      }); 
+      });
 
       res.redirect(`${process.env.FRONTEND_URL}/dashboard`);
     }
