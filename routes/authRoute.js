@@ -8,5 +8,6 @@ router
   .post("/login", authController.login)
   .get("/google", authController.googleAuth)
   .get("/google/callback", authController.googleAuthCallback)
+  .post("/exchange-token", authController.exchangeToken)
 
 module.exports = router;

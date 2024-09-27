@@ -13,6 +13,7 @@ exports.googleAuth = passport.authenticate("google", {
 });
 
 // Google Authentication Callback
+
 exports.googleAuthCallback = (req, res, next) => {
   passport.authenticate(
     "google",
@@ -22,22 +23,53 @@ exports.googleAuthCallback = (req, res, next) => {
     },
     (err, user) => {
       if (err || !user) {
-        return res.redirect(`${process.env.FRONTEND_URL}/auth/login`);
+        return res.redirect(
+          `${process.env.FRONTEND_URL}/auth/login?error=AuthFailed`
+        );
       }
 
-      const token = jwt.sign(
-        { userId: user.id, email: user.email },
+      const tempToken = jwt.sign(
+        {
+          userId: user.id,
+          email: user.email,
+          exp: Math.floor(Date.now() / 1000) + 60 * 25, // 25 minutes expiration
+        },
         process.env.JWT_SECRET
       );
 
-      res.cookie("accessToken", token, {
-        httpOnly: false,
-        sameSite: "None",
-      });
 
-      return res.status(200).json({token});
+      return res.redirect(
+        `${process.env.FRONTEND_URL}/auth/google-callback?code=${tempToken}`
+      );
     }
   )(req, res, next);
+};
+
+// New endpoint to exchange the temporary token for a long-lived access token
+exports.exchangeToken = async (req, res) => {
+  const { code } = req.body;
+
+  if (!code) {
+    return res.status(400).json({ error: "Code is required" });
+  }
+
+  try {
+    // Verify and decode the temporary token
+    const decoded = jwt.verify(code, process.env.JWT_SECRET);
+
+    // Generate a long-lived access token
+    const accessToken = jwt.sign(
+      { userId: decoded.userId, email: decoded.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" } // Set an appropriate expiration time
+    );
+
+    // Send the access token to the client
+    res.json({ token: accessToken });
+  } catch (error) {
+    console.error("Error exchanging token:", error);
+    res.status(400).json({ error: "Invalid or expired code" });
+  }
 };
 
 exports.register = async (req, res) => {
