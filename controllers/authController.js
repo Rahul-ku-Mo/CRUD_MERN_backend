@@ -2,7 +2,10 @@ const prisma = require("../db");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const passport = require("passport");
-
+const {
+  validateEmail,
+  validatePassword,
+} = require("../validators/authService");
 
 // Google Authentication
 exports.googleAuth = passport.authenticate("google", {
@@ -15,12 +18,11 @@ exports.googleAuthCallback = (req, res, next) => {
     "google",
     {
       session: false,
-      failureRedirect: `${process.env.FRONTEND_URL}/auth/register`,
+      failureRedirect: `${process.env.FRONTEND_URL}/auth/login`,
     },
     (err, user) => {
       if (err || !user) {
-        console.log(err, user);
-        return res.redirect(`${process.env.FRONTEND_URL}/auth/register`);
+        return res.redirect(`${process.env.FRONTEND_URL}/auth/login`);
       }
 
       const token = jwt.sign(
@@ -29,10 +31,11 @@ exports.googleAuthCallback = (req, res, next) => {
       );
 
       res.cookie("accessToken", token, {
-        samesite: "None",
-        maxAge: 24 * 60 * 60 * 1000,
+        httpOnly: false,
+        sameSite: "None",
       });
-      res.redirect(`${process.env.FRONTEND_URL}/dashboard`);
+
+      res.redirect(`${process.env.FRONTEND_URL}/dashboard?token=${token}`);
     }
   )(req, res, next);
 };
