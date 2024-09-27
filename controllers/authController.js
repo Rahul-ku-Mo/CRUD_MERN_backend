@@ -30,10 +30,11 @@ exports.googleAuthCallback = (req, res, next) => {
         process.env.JWT_SECRET
       );
 
-      res.cookie("accessToken", token, {
-        secure: process.env.NODE_ENV === "production",
-        maxAge: 3600000,
-      });
+      if (user) {
+        res.cookie("accessToken", token, {
+          httpOnly: false,
+        });
+      }
 
       res.redirect(`${process.env.FRONTEND_URL}/dashboard`);
     }

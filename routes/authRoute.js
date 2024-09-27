@@ -7,6 +7,6 @@ router
   .post("/register", authController.register)
   .post("/login", authController.login)
   .get("/google", authController.googleAuth)
-  .get("/google/callback", authController.googleAuthCallback);
+  .get("/google/callback", authController.googleAuthCallback)
 
 module.exports = router;
