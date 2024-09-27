@@ -15,11 +15,12 @@ exports.googleAuthCallback = (req, res, next) => {
     "google",
     {
       session: false,
-      failureRedirect: `${process.env.FRONTEND_URL}/auth/login`,
+      failureRedirect: `${process.env.FRONTEND_URL}/auth/register`,
     },
     (err, user) => {
       if (err || !user) {
-        return res.redirect(`${process.env.FRONTEND_URL}/auth/login`);
+        console.log(err, user);
+        return res.redirect(`${process.env.FRONTEND_URL}/auth/register`);
       }
 
       const token = jwt.sign(
