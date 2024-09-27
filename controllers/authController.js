@@ -2,10 +2,7 @@ const prisma = require("../db");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const passport = require("passport");
-const {
-  validateEmail,
-  validatePassword,
-} = require("../validators/authService");
+
 
 // Google Authentication
 exports.googleAuth = passport.authenticate("google", {
@@ -30,13 +27,10 @@ exports.googleAuthCallback = (req, res, next) => {
         process.env.JWT_SECRET
       );
 
-      if (user) {
-        res.cookie("accessToken", token, {
-          samesite: "None",
-          maxAge: 24 * 60 * 60 * 1000,
-        });
-      }
-
+      res.cookie("accessToken", token, {
+        samesite: "None",
+        maxAge: 24 * 60 * 60 * 1000,
+      });
       res.redirect(`${process.env.FRONTEND_URL}/dashboard`);
     }
   )(req, res, next);
