@@ -2,34 +2,50 @@ const prisma = require("../db");
 
 exports.createTask = async (req, res) => {
   const { title, description, columnId, userId } = req.body;
+
   try {
-    const task = await prisma.task.create({
+    const lastTask = await prisma.tasks.findFirst({
+      where: { columnId: columnId },
+      orderBy: { order: "desc" },
+      select: { order: true },
+    });
+
+    const newOrder = lastTask ? lastTask.order + 1 : 1;
+
+    const task = await prisma.tasks.create({
       data: {
         title,
         description,
+
         column: {
           connect: { id: columnId },
         },
-        createdBy: {
+        User: {
           connect: { id: userId },
         },
+        order: newOrder,
       },
     });
+
     res.status(201).json(task);
   } catch (err) {
+    console.log(err);
     res.status(400).json({ error: "Failed to create task" });
   }
 };
 
 exports.editTask = async (req, res) => {
   const { id } = req.params;
-  const { title, description, columnId } = req.body;
+  const { title, description, columnId, order, dueDate, reminder } = req.body;
   try {
-    const task = await prisma.task.update({
+    const task = await prisma.tasks.update({
       where: { id },
       data: {
         title,
         description,
+        order,
+        dueDate,
+        reminder,
         column: {
           connect: { id: columnId },
         },
@@ -44,7 +60,7 @@ exports.editTask = async (req, res) => {
 exports.deleteTask = async (req, res) => {
   const { id } = req.params;
   try {
-    await prisma.task.delete({
+    await prisma.tasks.delete({
       where: { id },
     });
     res.status(204).send();
@@ -56,7 +72,7 @@ exports.deleteTask = async (req, res) => {
 // Get Tasks
 exports.getTasks = async (req, res) => {
   try {
-    const tasks = await prisma.task.findMany();
+    const tasks = await prisma.tasks.findMany();
     res.status(200).json(tasks);
   } catch (err) {
     res.status(400).json({ error: "Failed to get tasks" });

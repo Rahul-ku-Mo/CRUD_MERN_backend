@@ -31,8 +31,8 @@ app.use(
 );
 
 app.use("/api/v1/auth", authRouter);
-app.use("/api/v1/task", taskRouter);
-app.use("/api/v1/column", columnRouter);
+app.use("/api/v1/tasks", taskRouter);
+app.use("/api/v1/columns", columnRouter);
 
 // Passport Configuration
 passport.use(
@@ -43,7 +43,7 @@ passport.use(
       callbackURL: process.env.GOOGLE_CALLBACK_URL,
     },
     async (accessToken, refreshToken, profile, done) => {
-      const user = await prisma.user.findUnique({
+      const user = await prisma.users.findUnique({
         where: { googleId: profile.id },
       });
 
@@ -51,7 +51,7 @@ passport.use(
         return done(null, user);
       }
 
-      const newUser = await prisma.user.create({
+      const newUser = await prisma.users.create({
         data: {
           googleId: profile.id,
           name: profile.displayName,
@@ -79,7 +79,7 @@ passport.deserializeUser(async (id, done) => {
 app.use(passport.initialize());
 app.use(passport.session());
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8000;
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

@@ -8,7 +8,7 @@ router.use(authenticateJWT);
 router
   .get("/", taskController.getTasks)
   .post("/", taskController.createTask)
-  .put("/", taskController.editTask)
+  .put("/:id", taskController.editTask)
   .delete("/:id", taskController.deleteTask);
 
 module.exports = router;

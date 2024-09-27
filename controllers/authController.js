@@ -2,6 +2,10 @@ const prisma = require("../db");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const passport = require("passport");
+const {
+  validateEmail,
+  validatePassword,
+} = require("../validators/authService");
 
 // Google Authentication
 exports.googleAuth = passport.authenticate("google", {
@@ -36,47 +40,92 @@ exports.googleAuthCallback = (req, res, next) => {
   )(req, res, next);
 };
 
-// Register User
 exports.register = async (req, res) => {
   const { email, password, name } = req.body;
 
   try {
+    // Validate input
+    if (!email || !password || !name) {
+      return res.status(400).json({ error: "All fields are required" });
+    }
+
+    // Check if user already exists
+    const existingUser = await prisma.users.findUnique({ where: { email } });
+    if (existingUser) {
+      return res
+        .status(409)
+        .json({ error: "User with this email already exists" });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = await prisma.user.create({
+    const user = await prisma.users.create({
       data: {
         email,
         password: hashedPassword,
         name,
       },
     });
-    res.json(user);
+
+    const token = jwt.sign(
+      { userId: user.id, email: user.email },
+      process.env.JWT_SECRET
+    );
+
+    res.status(201).json({
+      message: "User registered successfully",
+      user: { id: user.id, name: user.name, email: user.email },
+      token,
+    });
   } catch (err) {
-    res.status(400).json({ error: "User already exists or invalid data" });
+    res
+      .status(500)
+      .json({ error: "An unexpected error occurred during registration" });
   }
 };
 
-// Login User
 exports.login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const user = await prisma.user.findUnique({
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email and password are required" });
+    }
+
+    const user = await prisma.users.findUnique({
       where: { email },
     });
 
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-      return res.status(401).json({ error: "Invalid credentials" });
+    if (!user) {
+      return res.status(401).json({ error: "No user found with this email" });
+    }
+
+    if (user && user.password === null) {
+      return res
+        .status(403)
+        .json({ error: "This email is linked with a google Account" });
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      return res.status(401).json({ error: "Invalid password" });
     }
 
     const token = jwt.sign(
       { userId: user.id, email: user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: "1h" }
+      process.env.JWT_SECRET
     );
 
-    res.json({ token, name: user.name, email: user.email });
+    res.json({
+      message: "Login successful",
+      user: { id: user.id, name: user.name, email: user.email },
+      token,
+    });
   } catch (err) {
-    res.status(500).json({ error: "Internal server error" });
+    console.error("Login error:", err);
+    res
+      .status(500)
+      .json({ error: "An unexpected error occurred during login" });
   }
 };

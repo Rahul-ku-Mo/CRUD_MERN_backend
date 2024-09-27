@@ -6,6 +6,11 @@ const router = express.Router();
 
 router.use(authenticateJWT);
 
-router.post("/", columnController.createColumn);
+router
+  .post("/", columnController.createColumn)
+  .get("/", columnController.getColumns)
+  .put("/orderTasks", columnController.updateTaskInColumns)
+  .put("/:id", columnController.editColumn)
+  .delete("/:id", columnController.deleteColumn)
 
 module.exports = router;
