@@ -31,6 +31,10 @@ app.use(
   })
 );
 
+app.get("/", (req, res) => {
+  res.send("Welcome to the Task Manager Application!");
+});
+
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/tasks", taskRouter);
 app.use("/api/v1/columns", columnRouter);
