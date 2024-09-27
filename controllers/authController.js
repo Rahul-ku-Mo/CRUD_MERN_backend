@@ -35,7 +35,7 @@ exports.googleAuthCallback = (req, res, next) => {
         sameSite: "None",
       });
 
-      res.redirect(`${process.env.FRONTEND_URL}/dashboard?token=${token}`);
+      return res.status(200).json({token});
     }
   )(req, res, next);
 };
