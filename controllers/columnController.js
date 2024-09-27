@@ -101,11 +101,18 @@ exports.deleteColumn = async (req, res) => {
   const { id } = req.params;
 
   try {
-    await prisma.columns.delete({
-      where: {
-        id: id,
-      },
+    const columnExists = await prisma.columns.findUnique({
+      where: { id: id },
     });
+    if (!columnExists) {
+      return res.status(404).json({ error: "Column not found" });
+    }
+
+    const deletedColumn = await prisma.columns.delete({
+      where: { id: id },
+    });
+
+    res.status(204).json({ message: "Column deleted successfully" });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
