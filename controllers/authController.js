@@ -32,7 +32,8 @@ exports.googleAuthCallback = (req, res, next) => {
 
       if (user) {
         res.cookie("accessToken", token, {
-          httpOnly: false,
+          samesite: "None",
+          maxAge: 24 * 60 * 60 * 1000,
         });
       }
 
